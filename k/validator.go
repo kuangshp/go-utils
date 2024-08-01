@@ -84,14 +84,12 @@ var (
 	}
 )
 
-// IsAlpha checks if the string contains only letters (a-zA-Z).
-// Play: https://go.dev/play/p/7Q5sGOz2izQ
+// IsAlpha 判断是否为字母,包括大写，小写
 func IsAlpha(str string) bool {
 	return alphaMatcher.MatchString(str)
 }
 
-// IsAllUpper check if the string is all upper case letters A-Z.
-// Play: https://go.dev/play/p/ZHctgeK1n4Z
+// IsAllUpper 判断是否全部为大写字母
 func IsAllUpper(str string) bool {
 	for _, r := range str {
 		if !unicode.IsUpper(r) {
@@ -101,8 +99,7 @@ func IsAllUpper(str string) bool {
 	return str != ""
 }
 
-// IsAllLower check if the string is all lower case letters a-z.
-// Play: https://go.dev/play/p/GjqCnOfV6cM
+// IsAllLower 判断是否全部为小写字母
 func IsAllLower(str string) bool {
 	for _, r := range str {
 		if !unicode.IsLower(r) {
@@ -112,8 +109,7 @@ func IsAllLower(str string) bool {
 	return str != ""
 }
 
-// IsASCII checks if string is all ASCII char.
-// Play: https://go.dev/play/p/hfQNPLX0jNa
+// IsASCII 判断字符串是否全部为ASCII
 func IsASCII(str string) bool {
 	for i := 0; i < len(str); i++ {
 		if str[i] > unicode.MaxASCII {
@@ -123,22 +119,7 @@ func IsASCII(str string) bool {
 	return true
 }
 
-// IsPrintable checks if string is all printable chars.
-// Play: https://go.dev/play/p/Pe1FE2gdtTP
-func IsPrintable(str string) bool {
-	for _, r := range str {
-		if !unicode.IsPrint(r) {
-			if r == '\n' || r == '\r' || r == '\t' || r == '`' {
-				continue
-			}
-			return false
-		}
-	}
-	return true
-}
-
-// ContainUpper check if the string contain at least one upper case letter A-Z.
-// Play: https://go.dev/play/p/CmWeBEk27-z
+// ContainUpper 判断字符串里面是否包含大写字母
 func ContainUpper(str string) bool {
 	for _, r := range str {
 		if unicode.IsUpper(r) && unicode.IsLetter(r) {
@@ -148,8 +129,7 @@ func ContainUpper(str string) bool {
 	return false
 }
 
-// ContainLower check if the string contain at least one lower case letter a-z.
-// Play: https://go.dev/play/p/Srqi1ItvnAA
+// ContainLower 判断字符串里面是否包括小写字符
 func ContainLower(str string) bool {
 	for _, r := range str {
 		if unicode.IsLower(r) && unicode.IsLetter(r) {
@@ -159,72 +139,63 @@ func ContainLower(str string) bool {
 	return false
 }
 
-// ContainLetter check if the string contain at least one letter.
-// Play: https://go.dev/play/p/lqFD04Yyewp
+// ContainLetter 检查字符串是否至少包含一个字母。
 func ContainLetter(str string) bool {
 	return letterRegexMatcher.MatchString(str)
 }
 
-// ContainNumber check if the string contain at least one number.
+// ContainNumber 判断字符中至少包含一个数字
 func ContainNumber(input string) bool {
 	return numberRegexMatcher.MatchString(input)
 }
 
-// IsJSON checks if the string is valid JSON.
-// Play: https://go.dev/play/p/8Kip1Itjiil
+// IsJSON 判断是否为json
 func IsJSON(str string) bool {
 	var js json.RawMessage
 	return json.Unmarshal([]byte(str), &js) == nil
 }
 
-// IsNumberStr check if the string can convert to a number.
-// Play: https://go.dev/play/p/LzaKocSV79u
+// IsNumberStr 判断是否为字符串数字
 func IsNumberStr(s string) bool {
 	return IsIntStr(s) || IsFloatStr(s)
 }
 
-// IsFloatStr check if the string can convert to a float.
-// Play: https://go.dev/play/p/LOYwS_Oyl7U
+// IsFloatStr 判断是否为浮点型字符串
 func IsFloatStr(str string) bool {
 	_, e := strconv.ParseFloat(str, 64)
 	return e == nil
 }
 
-// IsIntStr check if the string can convert to a integer.
-// Play: https://go.dev/play/p/jQRtFv-a0Rk
+// IsIntStr 判断是否为整形字符串
 func IsIntStr(str string) bool {
 	return intStrMatcher.MatchString(str)
 }
 
-// IsIp check if the string is a ip address.
-// Play: https://go.dev/play/p/FgcplDvmxoD
-func IsIp(ipstr string) bool {
-	ip := net.ParseIP(ipstr)
+// IsIp 判断是否为ip地址
+func IsIp(ipStr string) bool {
+	ip := net.ParseIP(ipStr)
 	return ip != nil
 }
 
-// IsIpV4 check if the string is a ipv4 address.
-// Play: https://go.dev/play/p/zBGT99EjaIu
-func IsIpV4(ipstr string) bool {
-	ip := net.ParseIP(ipstr)
+// IsIpV4 判断是否为ipv4
+func IsIpV4(ipStr string) bool {
+	ip := net.ParseIP(ipStr)
 	if ip == nil {
 		return false
 	}
 	return ip.To4() != nil
 }
 
-// IsIpV6 check if the string is a ipv6 address.
-// Play: https://go.dev/play/p/AHA0r0AzIdC
-func IsIpV6(ipstr string) bool {
-	ip := net.ParseIP(ipstr)
+// IsIpV6 判断是否为ipv6
+func IsIpV6(ipStr string) bool {
+	ip := net.ParseIP(ipStr)
 	if ip == nil {
 		return false
 	}
 	return ip.To4() == nil && len(ip) == net.IPv6len
 }
 
-// IsPort check if the string is a valid net port.
-// Play:
+// IsPort 判断是为端口号
 func IsPort(str string) bool {
 	if i, err := strconv.ParseInt(str, 10, 64); err == nil && i > 0 && i < 65536 {
 		return true
@@ -232,8 +203,7 @@ func IsPort(str string) bool {
 	return false
 }
 
-// IsUrl check if the string is url.
-// Play: https://go.dev/play/p/pbJGa7F98Ka
+// IsUrl 是否为url地址
 func IsUrl(str string) bool {
 	if str == "" || len(str) >= 2083 || len(str) <= 3 || strings.HasPrefix(str, ".") {
 		return false
@@ -258,23 +228,20 @@ func IsDns(dns string) bool {
 	return dnsMatcher.MatchString(dns)
 }
 
-// IsEmail check if the string is a email address.
-// Play: https://go.dev/play/p/Os9VaFlT33G
+// IsEmail 是否为email地址
 func IsEmail(email string) bool {
 	_, err := mail.ParseAddress(email)
 	return err == nil
 
-	// return emailMatcher.MatchString(email)
+	//return emailMatcher.MatchString(email)
 }
 
-// IsChineseMobile check if the string is chinese mobile number.
-// Play: https://go.dev/play/p/GPYUlGTOqe3
+// IsChineseMobile 是否为中国手机号码
 func IsChineseMobile(mobileNum string) bool {
 	return chineseMobileMatcher.MatchString(mobileNum)
 }
 
-// IsChineseIdNum check if the string is chinese id card.
-// Play: https://go.dev/play/p/d8EWhl2UGDF
+// IsChineseIdNum 是否为中国大陆身份证号码
 func IsChineseIdNum(id string) bool {
 	// All characters should be numbers, and the last digit can be either x or X
 	if !chineseIdMatcher.MatchString(id) {
@@ -304,89 +271,38 @@ func IsChineseIdNum(id string) bool {
 	return verifyStr[sum%11] == strings.ToUpper(id[17:18])
 }
 
-// ContainChinese check if the string contain mandarin chinese.
-// Play: https://go.dev/play/p/7DpU0uElYeM
-func ContainChinese(s string) bool {
+// IsContainChinese 是否包括中文
+func IsContainChinese(s string) bool {
 	return chineseMatcher.MatchString(s)
 }
 
-// IsChinesePhone check if the string is chinese phone number.
-// Valid chinese phone is xxx-xxxxxxxx or xxxx-xxxxxxx.
-// Play: https://go.dev/play/p/RUD_-7YZJ3I
+// IsChinesePhone 是否为中国电话号码
 func IsChinesePhone(phone string) bool {
 	return chinesePhoneMatcher.MatchString(phone)
 }
 
-// IsCreditCard check if the string is credit card.
-// Play: https://go.dev/play/p/sNwwL6B0-v4
+// IsCreditCard 是否为信用卡号
 func IsCreditCard(creditCart string) bool {
 	return creditCardMatcher.MatchString(creditCart)
 }
 
-// IsBase64 check if the string is base64 string.
-// Play: https://go.dev/play/p/sWHEySAt6hl
+// IsBase64 是否为base64字符
 func IsBase64(base64 string) bool {
 	return base64Matcher.MatchString(base64)
 }
 
-// IsEmptyString check if the string is empty.
-// Play: https://go.dev/play/p/dpzgUjFnBCX
+// IsEmptyString 是否为空字符串
 func IsEmptyString(str string) bool {
 	return len(str) == 0
 }
 
-// IsRegexMatch check if the string match the regexp.
-// Play: https://go.dev/play/p/z_XeZo_litG
+// IsRegexMatch 是否为正则
 func IsRegexMatch(str, regex string) bool {
 	reg := regexp.MustCompile(regex)
 	return reg.MatchString(str)
 }
 
-// IsStrongPassword check if the string is strong password, if len(password) is less than the length param, return false
-// Strong password: alpha(lower+upper) + number + special chars(!@#$%^&*()?><).
-// Play: https://go.dev/play/p/QHdVcSQ3uDg
-func IsStrongPassword(password string, length int) bool {
-	if len(password) < length {
-		return false
-	}
-	var num, lower, upper, special bool
-	for _, r := range password {
-		switch {
-		case unicode.IsDigit(r):
-			num = true
-		case unicode.IsUpper(r):
-			upper = true
-		case unicode.IsLower(r):
-			lower = true
-		case unicode.IsSymbol(r), unicode.IsPunct(r):
-			special = true
-		}
-	}
-
-	return num && lower && upper && special
-}
-
-// IsWeakPassword check if the string is weak password
-// Weak password: only letter or only number or letter + number.
-// Play: https://go.dev/play/p/wqakscZH5gH
-func IsWeakPassword(password string) bool {
-	var num, letter, special bool
-	for _, r := range password {
-		switch {
-		case unicode.IsDigit(r):
-			num = true
-		case unicode.IsLetter(r):
-			letter = true
-		case unicode.IsSymbol(r), unicode.IsPunct(r):
-			special = true
-		}
-	}
-
-	return (num || letter) && !special
-}
-
-// IsZeroValue checks if value is a zero value.
-// Play: https://go.dev/play/p/UMrwaDCi_t4
+// IsZeroValue 是否为空值
 func IsZeroValue(value any) bool {
 	if value == nil {
 		return true
@@ -415,135 +331,5 @@ func IsZeroValue(value any) bool {
 	case reflect.Ptr, reflect.Chan, reflect.Func, reflect.Interface, reflect.Slice, reflect.Map:
 		return rv.IsNil()
 	}
-
 	return reflect.DeepEqual(rv.Interface(), reflect.Zero(rv.Type()).Interface())
-}
-
-// IsGBK check if data encoding is gbk
-// Note: this function is implemented by whether double bytes fall within the encoding range of gbk,
-// while each byte of utf-8 encoding format falls within the encoding range of gbk.
-// Therefore, utf8.valid() should be called first to check whether it is not utf-8 encoding,
-// and then call IsGBK() to check gbk encoding. like below
-/**
-	data := []byte("你好")
-	if utf8.Valid(data) {
-		fmt.Println("data encoding is utf-8")
-	}else if(IsGBK(data)) {
-		fmt.Println("data encoding is GBK")
-	}
-	fmt.Println("data encoding is unknown")
-**/
-// Play: https://go.dev/play/p/E2nt3unlmzP
-func IsGBK(data []byte) bool {
-	i := 0
-	for i < len(data) {
-		if data[i] <= 0xff {
-			i++
-			continue
-		} else {
-			if data[i] >= 0x81 &&
-				data[i] <= 0xfe &&
-				data[i+1] >= 0x40 &&
-				data[i+1] <= 0xfe &&
-				data[i+1] != 0xf7 {
-				i += 2
-				continue
-			} else {
-				return false
-			}
-		}
-	}
-
-	return true
-}
-
-// IsNumber check if the value is number(integer, float) or not.
-// Play: https://go.dev/play/p/mdJHOAvtsvF
-func IsNumber(v any) bool {
-	return IsInt(v) || IsFloat(v)
-}
-
-// IsFloat check if the value is float(float32, float34) or not.
-// Play: https://go.dev/play/p/vsyG-sxr99_Z
-func IsFloat(v any) bool {
-	switch v.(type) {
-	case float32, float64:
-		return true
-	}
-	return false
-}
-
-// IsInt check if the value is integer(int, unit) or not.
-// Play: https://go.dev/play/p/eFoIHbgzl-z
-func IsInt(v any) bool {
-	switch v.(type) {
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr:
-		return true
-	}
-	return false
-}
-
-// IsBin check if a give string is a valid binary value or not.
-// Play: https://go.dev/play/p/ogPeg2XJH4P
-func IsBin(v string) bool {
-	return binMatcher.MatchString(v)
-}
-
-// IsHex check if a give string is a valid hexadecimal value or not.
-// Play: https://go.dev/play/p/M2qpHbEwmm7
-func IsHex(v string) bool {
-	return hexMatcher.MatchString(v)
-}
-
-// IsBase64URL check if a give string is a valid URL-safe Base64 encoded string.
-// Play: https://go.dev/play/p/vhl4mr8GZ6S
-func IsBase64URL(v string) bool {
-	return base64URLMatcher.MatchString(v)
-}
-
-// IsJWT check if a give string is a valid JSON Web Token (JWT).
-// Play: https://go.dev/play/p/R6Op7heJbKI
-func IsJWT(v string) bool {
-	strings := strings.Split(v, ".")
-	if len(strings) != 3 {
-		return false
-	}
-
-	for _, s := range strings {
-		if !IsBase64URL(s) {
-			return false
-		}
-	}
-
-	return true
-}
-
-// IsVisa check if a give string is a valid visa card nubmer or not.
-// Play: https://go.dev/play/p/SdS2keOyJsl
-func IsVisa(v string) bool {
-	return visaMatcher.MatchString(v)
-}
-
-// IsMasterCard check if a give string is a valid master card nubmer or not.
-// Play: https://go.dev/play/p/CwWBFRrG27b
-func IsMasterCard(v string) bool {
-	return masterCardMatcher.MatchString(v)
-}
-
-// IsAmericanExpress check if a give string is a valid american expression card nubmer or not.
-// Play: https://go.dev/play/p/HIDFpcOdpkd
-func IsAmericanExpress(v string) bool {
-	return americanExpressMatcher.MatchString(v)
-}
-
-// IsUnionPay check if a give string is a valid union pay nubmer or not.
-// Play: https://go.dev/play/p/CUHPEwEITDf
-func IsUnionPay(v string) bool {
-	return unionPay.MatchString(v)
-}
-
-// IsChinaUnionPay check if a give string is a valid china union pay nubmer or not.
-// Play: https://go.dev/play/p/yafpdxLiymu
-func IsChinaUnionPay(v string) bool {
-	return chinaUnionPay.MatchString(v)
 }
