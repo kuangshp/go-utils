@@ -67,21 +67,6 @@ func Filter[T any, Slice ~[]T](collection Slice, predicate func(item T, index in
 	return result
 }
 
-func Filter1[T any, R any](collection []T, callback func(item T, index int) (R, bool)) []R {
-	result := []R{}
-	for i := range collection {
-		if r, ok := callback(collection[i], i); ok {
-			result = append(result, r)
-		}
-	}
-	return result
-}
-
-// var list1 = []int64{1, 2, 3}
-//	reduce := lo.Reduce(list1, func(pre int64, cur int64, index int) int64 {
-//		return pre + cur
-//	}, 0)
-
 // Reduce 循环list,生成一个新的值
 func Reduce[T any, R any](collection []T, accumulator func(agg R, item T, index int) R, initial R) R {
 	for i := range collection {

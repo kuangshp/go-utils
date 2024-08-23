@@ -36,7 +36,7 @@ func TestTree(t *testing.T) {
 		{Id: 4, ParentId: 2, Name: "你好4"},
 	}
 
-	roots := BuildTree(items)
+	roots := BuildTree(items, 1)
 	/**
 	[{"id":1,"parentId":0,"children":[{"id":2,"parentId":1,"children":[{"id":4,"parentId":2,"children":null,"name":"你好4"}],"name":"你好2"},{"id":3,"pard":1,"children":null,"name":"你好3"}],"name":"你好1"}]
 	*/
