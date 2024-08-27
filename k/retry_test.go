@@ -1,7 +1,6 @@
 package k
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -10,7 +9,7 @@ import (
 )
 
 // 定义要执行的函数
-func test1() (any, error) {
+func test1(args ...any) (any, error) {
 	rand.Seed(time.Now().UnixNano()) // 使用当前时间的纳秒数作为种子，确保每次运行产生不同的随机数
 	randomNumber := rand.Float64()
 	fmt.Println(randomNumber, "当前值")
@@ -21,13 +20,11 @@ func test1() (any, error) {
 }
 
 func TestRetry(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10)
-	defer cancel()
 	maxRetries := 5
 	retryDelay := 2
-	if err := Retry(ctx, maxRetries, retryDelay, test1, func(data any) {
+	if err := Retry(test1, func(data ...any) {
 		fmt.Println("重试成功:", data)
-	}); err != nil {
+	}, maxRetries, retryDelay); err != nil {
 		fmt.Printf("重试次数太多了: %s\n", err)
 	}
 }
