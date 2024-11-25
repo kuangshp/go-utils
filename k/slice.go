@@ -161,13 +161,12 @@ func Distinct[T comparable](slice []T) []T {
 	return result
 }
 
-// SliceToMap 将slice其中抽取几个字段转换为map
-func SliceToMap[T any, K comparable, V any](collection []T, transform func(item T) (K, V)) map[K]V {
+// ToMap 将slice其中抽取几个字段转换为map
+func ToMap[T any, K comparable, V any](collection []T, transform func(item T) (K, V)) map[K]V {
 	result := make(map[K]V, len(collection))
 	for i := range collection {
 		k, v := transform(collection[i])
 		result[k] = v
 	}
-
 	return result
 }

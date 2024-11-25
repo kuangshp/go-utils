@@ -165,6 +165,7 @@ func OmitByValues[K comparable, V comparable](m map[K]V, values []V) map[K]V {
 	return result
 }
 
+// MapKeys 抽取map中全部的key
 func MapKeys[K comparable, V any, T comparable](m map[K]V, iteratee func(key K, value V) T) map[T]V {
 	result := make(map[T]V, len(m))
 	for k, v := range m {
@@ -173,6 +174,7 @@ func MapKeys[K comparable, V any, T comparable](m map[K]V, iteratee func(key K, 
 	return result
 }
 
+// MapValues 抽取map中全部的value
 func MapValues[K comparable, V any, T any](m map[K]V, iteratee func(key K, value V) T) map[K]T {
 	result := make(map[K]T, len(m))
 	for k, v := range m {
@@ -181,6 +183,7 @@ func MapValues[K comparable, V any, T any](m map[K]V, iteratee func(key K, value
 	return result
 }
 
+// HasKey map中是否包括这个key
 func HasKey[K comparable, V any](m map[K]V, key K) bool {
 	_, hasKey := m[key]
 	return hasKey
