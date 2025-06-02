@@ -62,3 +62,28 @@ func TestReduce(t *testing.T) {
 	}, 0)
 	fmt.Println(reduce)
 }
+
+func TestGroupBy(t *testing.T) {
+	list1 := []map[string]int64{
+		{"name": 10, "age": 20},
+		{"name": 2, "age": 20},
+		{"name": 3, "age": 30},
+	}
+	groupBy := GroupBy(list1, func(item map[string]int64) int64 {
+		return item["age"]
+	})
+	// {"20":[{"age":20,"name":10},{"age":20,"name":2}],"30":[{"age":30,"name":3}]}
+	fmt.Println(MapToString(groupBy))
+}
+
+func TestToMap(t *testing.T) {
+	list1 := []map[string]int64{
+		{"name": 10, "age": 20},
+		{"name": 2, "age": 20},
+		{"name": 3, "age": 30},
+	}
+	toMap := ToMap(list1, func(item map[string]int64) (int64, int64) {
+		return item["age"], item["name"]
+	})
+	fmt.Println(MapToString(toMap))
+}

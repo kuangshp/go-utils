@@ -5,6 +5,7 @@ type TreeNodeInterface interface {
 	GetID() int64
 	GetParentID() int64
 	AddChild(TreeNodeInterface)
+	SetIsLeaf(bool)
 }
 
 // BuildTree 通用的泛型生成树结构
@@ -12,8 +13,9 @@ func BuildTree[T TreeNodeInterface](nodes []T, options ...int64) []T {
 	idMap := make(map[int64]T)
 	var root []T
 
-	// 初始化所有节点到 map 中
+	// 初始化所有节点到 map 中,并且默认都是子节点
 	for _, node := range nodes {
+		node.SetIsLeaf(true)
 		idMap[node.GetID()] = node
 	}
 	var rootId int64
@@ -25,9 +27,9 @@ func BuildTree[T TreeNodeInterface](nodes []T, options ...int64) []T {
 		if node.GetParentID() == rootId {
 			root = append(root, node) // 顶级节点
 		} else if parent, exists := idMap[node.GetParentID()]; exists {
-			parent.AddChild(node) // 添加为父节点的子节点
+			parent.AddChild(node)   // 添加为父节点的子节点
+			parent.SetIsLeaf(false) // 有子节点 => 不是叶子
 		}
 	}
-
 	return root
 }
