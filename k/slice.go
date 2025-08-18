@@ -170,3 +170,23 @@ func ToMap[T any, K comparable, V any](collection []T, transform func(item T) (K
 	}
 	return result
 }
+
+// Index 查找元素在一个列表里面的位置
+func Index[T comparable](slice []T, element T) int {
+	for i, v := range slice {
+		if v == element {
+			return i
+		}
+	}
+	return -1
+}
+
+func Find[T any](slice []T, predicate func(T) bool) (T, bool) {
+	for _, v := range slice {
+		if predicate(v) {
+			return v, true
+		}
+	}
+	var zero T
+	return zero, false
+}

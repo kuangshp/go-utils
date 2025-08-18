@@ -87,3 +87,15 @@ func TestToMap(t *testing.T) {
 	})
 	fmt.Println(MapToString(toMap))
 }
+
+func TestFind(t *testing.T) {
+	list1 := []map[string]int64{
+		{"name": 10, "age": 20},
+		{"name": 2, "age": 20},
+		{"name": 3, "age": 30},
+	}
+	find, isOk := Find(list1, func(m map[string]int64) bool {
+		return m["age"] > 20
+	})
+	fmt.Println(find, isOk)
+}
