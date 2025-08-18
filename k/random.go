@@ -57,6 +57,12 @@ func RandNumeralOrLetter(length int) string {
 	return random(Numeral+Letters, length)
 }
 
+// GetRandomNum 生成随机数字(包括边界)
+func GetRandomNum(min, max int) int64 {
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+	return int64(rand.Intn(max-min+1) + min)
+}
+
 // nearestPowerOfTwo 返回一个大于等于cap的最近的2的整数次幂，参考java8的hashmap的tableSizeFor函数
 func nearestPowerOfTwo(cap int) int {
 	n := cap - 1
@@ -73,7 +79,7 @@ func nearestPowerOfTwo(cap int) int {
 	return n + 1
 }
 
-// random generate a random string based on given string range.
+// random 内部使用，根据字符长度来返回字符串
 func random(s string, length int) string {
 	// 仿照strings.Builder
 	// 创建一个长度为 length 的字节切片

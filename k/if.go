@@ -6,3 +6,10 @@ func If[T any](condition bool, trueVal, falseVal T) T {
 	}
 	return falseVal
 }
+
+func IfLazy[T any](condition bool, trueFunc func() T, falseValue T) T {
+	if condition {
+		return trueFunc()
+	}
+	return falseValue
+}
