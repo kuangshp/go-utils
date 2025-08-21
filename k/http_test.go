@@ -2,6 +2,7 @@ package k
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -144,5 +145,27 @@ func TestProxy(t *testing.T) {
 
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected %d, got %d", http.StatusOK, resp.StatusCode)
+	}
+}
+
+func TestHttpClient(t *testing.T) {
+	client := NewHttpClient()
+	//resp, err := client.Get("https://www.ipplus360.com/getLocation")
+	response, err := client.SendRequest(&HttpRequest{
+		Method: "GET",
+		RawURL: "https://www.ipplus360.com/getLocation",
+	})
+	type Result struct {
+		Success bool   `json:"success"`
+		Code    int    `json:"code"`
+		Msg     string `json:"msg"`
+		Data    string `json:"data"`
+	}
+
+	if err == nil {
+		var result = Result{}
+		if err := client.DecodeResponse(response, &result); err == nil {
+			fmt.Println(result.Data)
+		}
 	}
 }
