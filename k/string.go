@@ -40,3 +40,39 @@ func HideString(origin string, start, end int, replaceChar string) string {
 	replaceStr := strings.Repeat(replaceChar, replaceSize)
 	return startStr + replaceStr + endStr
 }
+
+// MaskEmail 隐藏邮箱中间4位
+func MaskEmail(email string) string {
+	if email == "" {
+		return ""
+	}
+	parts := strings.Split(email, "@")
+	if len(parts) != 2 {
+		return email
+	}
+	localPart := parts[0]
+	domain := parts[1]
+	// 如果本地部分长度小于等于4，只显示第一个字符
+	if len(localPart) <= 4 {
+		return string(localPart[0]) + "****@" + domain
+	}
+	// 隐藏中间4位
+	visibleStart := (len(localPart) - 4) / 2
+	visibleEnd := visibleStart + 4
+	return localPart[:visibleStart] + "****" + localPart[visibleEnd:] + "@" + domain
+}
+
+// MaskMobile 隐藏手机号中间4位
+func MaskMobile(mobile string) string {
+	if mobile == "" {
+		return ""
+	}
+	// 如果手机号长度小于等于4，只显示前后各1位
+	if len(mobile) <= 4 {
+		return mobile
+	}
+	// 隐藏中间4位
+	visibleStart := (len(mobile) - 4) / 2
+	visibleEnd := visibleStart + 4
+	return mobile[:visibleStart] + "****" + mobile[visibleEnd:]
+}

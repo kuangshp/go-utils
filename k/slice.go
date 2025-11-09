@@ -1,6 +1,9 @@
 package k
 
-import "sort"
+import (
+	"reflect"
+	"sort"
+)
 
 // SortListMap 给list的结构体排序
 func SortListMap[T any, dataList ~[]T](collection dataList, predicate func(p1, p2 T) bool) {
@@ -103,6 +106,21 @@ func GroupBy[T any, U comparable, Slice ~[]T](collection Slice, iteratee func(it
 	return result
 }
 
+// GroupByWithMapper 带映射成新的分组
+func GroupByWithMapper[T any, K comparable, V any](
+	items []T,
+	keyMapper func(T) K,
+	valueMapper func(T) V,
+) map[K][]V {
+	result := make(map[K][]V)
+	for _, item := range items {
+		key := keyMapper(item)
+		value := valueMapper(item)
+		result[key] = append(result[key], value)
+	}
+	return result
+}
+
 // Difference 取差集,slice=[1,2,3,4,5,6],comparedSlice = [1,2,3] 最后返回[4,5,6]
 func Difference[T comparable](slice, comparedSlice []T) []T {
 	result := []T{}
@@ -181,12 +199,30 @@ func Index[T comparable](slice []T, element T) int {
 	return -1
 }
 
+// Find 查找切片中第一个满足条件的元素
 func Find[T any](slice []T, predicate func(T) bool) (T, bool) {
-	for _, v := range slice {
-		if predicate(v) {
-			return v, true
+	for _, item := range slice {
+		if predicate(item) {
+			return item, true
 		}
 	}
+
 	var zero T
 	return zero, false
+}
+
+// DistinctByField 对一个列表根据某个字段来过滤重复的
+func DistinctByField[T any](slice []T, fieldName string) []T {
+	seen := make(map[any]bool)
+	var result []T
+	for _, item := range slice {
+		// 使用反射获取字段值
+		fieldValue := reflect.ValueOf(item).FieldByName(fieldName).Interface()
+		// 如果字段值尚未出现过，则添加到结果中
+		if !seen[fieldValue] {
+			seen[fieldValue] = true
+			result = append(result, item)
+		}
+	}
+	return result
 }
