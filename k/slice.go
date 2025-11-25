@@ -121,7 +121,7 @@ func GroupByWithMapper[T any, K comparable, V any](
 	return result
 }
 
-// Difference 取差集,slice=[1,2,3,4,5,6],comparedSlice = [1,2,3] 最后返回[4,5,6]
+// Difference 取差集 找出 slice 中有但 comparedSlice 中没有的元素,slice=[1,2,3,4,5,6],comparedSlice = [1,2,3] 最后返回[4,5,6]
 func Difference[T comparable](slice, comparedSlice []T) []T {
 	result := []T{}
 	for _, v := range slice {
