@@ -226,3 +226,19 @@ func DistinctByField[T any](slice []T, fieldName string) []T {
 	}
 	return result
 }
+
+// ChunkSlice 将一个列表切分为多个子列表
+func ChunkSlice[T any](list []T, size int) [][]T {
+	if size <= 0 {
+		return nil
+	}
+	var result [][]T
+	for i := 0; i < len(list); i += size {
+		end := i + size
+		if end > len(list) {
+			end = len(list)
+		}
+		result = append(result, list[i:end])
+	}
+	return result
+}

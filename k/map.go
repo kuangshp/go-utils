@@ -12,6 +12,12 @@ func MapToString[T any](result T) string {
 	return string(jsonBytes)
 }
 
+// MapIndentToString 将map转换为字符串输出
+func MapIndentToString[T any](result T) string {
+	jsonBytes, _ := json.MarshalIndent(result, "", " ")
+	return string(jsonBytes)
+}
+
 // MapKeySort 将map的key进行ASCII排序
 func MapKeySort[T any](m map[string]T, options ...string) string {
 	// 将map中全部的key到切片中
