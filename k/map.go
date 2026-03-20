@@ -194,3 +194,30 @@ func HasKey[K comparable, V any](m map[K]V, key K) bool {
 	_, hasKey := m[key]
 	return hasKey
 }
+
+// GetValue 从map中获取值
+// 参数1: map数据
+// 参数2: 要获取的key
+// 参数3: 可选参数，默认值
+// 返回: 如果key存在则返回对应值，否则返回默认值
+func GetValue[T any](data map[string]T, key string, defaultValue ...T) T {
+	if data == nil {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+		var zero T
+		return zero
+	}
+
+	if val, ok := data[key]; ok {
+		return val
+	}
+
+	// 有提供默认值
+	if len(defaultValue) > 0 {
+		return defaultValue[0]
+	}
+	// 没有提供默认值，返回零值
+	var zero T
+	return zero
+}

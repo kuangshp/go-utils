@@ -1,8 +1,14 @@
 package k
 
-import "strings"
+import (
+	"golang.org/x/crypto/bcrypt"
+	"strings"
+)
 
 // Substring 字符串截取
+// s 字符串
+// offset 起始位置
+// length 长度
 func Substring(s string, offset int, length uint) string {
 	rs := []rune(s)
 	size := len(rs)
@@ -63,6 +69,7 @@ func MaskEmail(email string) string {
 }
 
 // MaskMobile 隐藏手机号中间4位
+// mobile 手机号字符串
 func MaskMobile(mobile string) string {
 	if mobile == "" {
 		return ""
@@ -75,4 +82,38 @@ func MaskMobile(mobile string) string {
 	visibleStart := (len(mobile) - 4) / 2
 	visibleEnd := visibleStart + 4
 	return mobile[:visibleStart] + "****" + mobile[visibleEnd:]
+}
+
+// MakePassword 明文转换为密文
+func MakePassword(password string) (string, error) {
+	newPasswordByte, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(newPasswordByte), nil
+}
+
+// CheckPassword 校验密文
+// encryptedPassword密文
+//
+//	password 明文
+func CheckPassword(encryptedPassword, password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(encryptedPassword), []byte(password))
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+// JoinStr 字符串拼接
+// sep 拼接符号
+// parts 要拼接的字符串数组
+func JoinStr(sep string, parts ...string) string {
+	var result []string
+	for _, part := range parts {
+		if part != "" {
+			result = append(result, part)
+		}
+	}
+	return strings.Join(result, sep)
 }

@@ -26,10 +26,9 @@ func CheckDateTime(timeStr string) bool {
 }
 
 // DateStrToTime 简单的时间判断
-func DateStrToTime(dateTimeStr string) time.Time {
+func DateStrToTime(dateTimeStr string) (time.Time, error) {
 	local, _ := time.LoadLocation("Asia/Shanghai")
-	dateTime, _ := time.ParseInLocation("2006-01-02", dateTimeStr, local)
-	return dateTime
+	return time.ParseInLocation("2006-01-02", dateTimeStr, local)
 }
 
 // DateTimeStrToTime 时间字符串转换时间格式
