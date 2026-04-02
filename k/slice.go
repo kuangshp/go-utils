@@ -242,3 +242,13 @@ func ChunkSlice[T any](list []T, size int) [][]T {
 	}
 	return result
 }
+
+// Flatten 扁平化一层
+// Example: k.Flatten(builder)
+func Flatten[T any](b *Builder[[]T]) []T {
+	res := make([]T, 0)
+	for _, item := range b.data {
+		res = append(res, item...)
+	}
+	return res
+}
