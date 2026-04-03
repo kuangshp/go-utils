@@ -25,7 +25,7 @@ func (b *Builder[T]) Build() []T {
 }
 
 // -----------------------------------------------------------------------------
-// 👇 以下全部是 纯链式方法（均返回 *Builder[T]）
+// 以下全部是 纯链式方法（均返回 *Builder[T]）
 // -----------------------------------------------------------------------------
 
 // Sort 自定义排序
@@ -225,6 +225,15 @@ func (b *Builder[T]) MapToAny(fn func(item T, index int) any) *Builder[any] {
 		result[i] = fn(item, i)
 	}
 	return From(result)
+}
+
+func (b *Builder[T]) Map(fn func(item T, idx int) T) *Builder[T] {
+	result := make([]T, len(b.data))
+	for i, item := range b.data {
+		result[i] = fn(item, i)
+	}
+	b.data = result
+	return b
 }
 
 // -----------------------------------------------------------------------------
