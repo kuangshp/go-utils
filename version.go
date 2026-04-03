@@ -1,3 +1,3 @@
 package go_utils
 
-const Version = "v1.0.8"
+const Version = "v1.0.9"
