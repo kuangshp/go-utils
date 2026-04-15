@@ -2,6 +2,8 @@ package k
 
 import (
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"strings"
 )
 
@@ -116,4 +118,17 @@ func JoinStr(sep string, parts ...string) string {
 		}
 	}
 	return strings.Join(result, sep)
+}
+
+// Case2Camel 下划线转驼峰(大驼峰)
+func Case2Camel(name string) string {
+	name = strings.Replace(name, "_", " ", -1)
+	name = cases.Title(language.Und).String(name)
+	return strings.Replace(name, " ", "", -1)
+}
+
+// LowerCamelCase 转换为小驼峰
+func LowerCamelCase(name string) string {
+	name = Case2Camel(name)
+	return strings.ToLower(name[:1]) + name[1:]
 }
