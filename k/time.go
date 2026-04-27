@@ -37,36 +37,52 @@ func DateStrToTime(dateTimeStr string) (time.Time, error) {
 }
 
 // DateTimeStrToTime 时间字符串转换时间格式
-func DateTimeStrToTime(dateTimeStr string) (time.Time, error) {
-	// 空字符串直接返回零值
+// flag:
+//
+//	0 或不传：默认行为
+//	1：开始时间（缺失时补 00:00:00）
+//	2：结束时间（缺失时补 23:59:59）
+func DateTimeStrToTime(dateTimeStr string, flag ...int) (time.Time, error) {
 	if strings.TrimSpace(dateTimeStr) == "" {
 		return time.Time{}, nil
 	}
-	// 尝试时间戳
+
+	mode := 0
+	if len(flag) > 0 {
+		mode = flag[0]
+	}
+
+	// ====== 时间戳优先 ======
 	if ts, err := strconv.ParseInt(dateTimeStr, 10, 64); err == nil {
 		switch len(dateTimeStr) {
-		case 13: // 毫秒
+		case 13:
 			return time.UnixMilli(ts), nil
-		case 10: // 秒
+		case 10:
 			return time.Unix(ts, 0), nil
 		}
 	}
-	layouts := []string{
-		"2006-01-02 15:04:05", // 完整日期时间格式
-		"2006-01-02",          // 仅日期格式
-		time.RFC3339,          // ISO标准格式
-	}
-	// 尝试用所有支持的格式解析
-	var parsedTime time.Time
-	var err error
 
+	// ====== 判断是否包含时分秒 ======
+	hasTime := strings.Contains(dateTimeStr, ":")
+	// ====== 只有“没有时分秒”才补 ======
+	if !hasTime {
+		switch mode {
+		case 1:
+			dateTimeStr += " 00:00:00"
+		case 2:
+			dateTimeStr += " 23:59:59"
+		}
+	}
+	layouts := []string{
+		"2006-01-02 15:04:05",
+		"2006-01-02",
+		time.RFC3339,
+	}
 	for _, layout := range layouts {
-		parsedTime, err = time.ParseInLocation(layout, dateTimeStr, time.Local)
-		if err == nil {
+		if parsedTime, err := time.ParseInLocation(layout, dateTimeStr, time.Local); err == nil {
 			return parsedTime, nil
 		}
 	}
-	// 如果所有格式都解析失败，返回错误
 	return time.Time{}, errors.New("仅支持时间格式: 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS'")
 }
 
