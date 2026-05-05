@@ -16,6 +16,8 @@ func getStore(_ *testing.T) AdapterCache {
 }
 
 func TestSetGet(t *testing.T) {
+	// // 使用内存来做验证码缓存
+	//	captcha.SetStore(store.NewCacheStore(store.NewMemory(), 1000))
 	s := NewCacheStore(getStore(t), _expiration)
 	id := "captcha id"
 	d := "random-string"
