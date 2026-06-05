@@ -113,37 +113,27 @@ func DateTimeStrToTime(dateTimeStr string, flag ...int) (time.Time, error) {
 }
 
 // ParseDateRange 解析时间范围
-func ParseDateRange(startDate, endDate string) (*time.Time, *time.Time, error) {
-	startAt, err := DateTimeStrToTime(startDate, DateTimeModeStart)
+func ParseDateRange(startDate, endDate string) (startAt time.Time, endAt time.Time, err error) {
+	startAt, err = DateTimeStrToTime(startDate, DateTimeModeStart)
 	if err != nil {
-		return nil, nil, errors.New("开始时间格式错误")
+		err = errors.New("开始时间格式错误")
+		return
 	}
 
-	endAt, err := DateTimeStrToTime(endDate, DateTimeModeEnd)
+	endAt, err = DateTimeStrToTime(endDate, DateTimeModeEnd)
 	if err != nil {
-		return nil, nil, errors.New("结束时间格式错误")
+		err = errors.New("结束时间格式错误")
+		return
 	}
 
-	if startAt.IsZero() && endAt.IsZero() {
-		return nil, nil, nil
+	if !startAt.IsZero() &&
+		!endAt.IsZero() &&
+		startAt.After(endAt) {
+		err = errors.New("开始时间不能大于结束时间")
+		return
 	}
 
-	if !startAt.IsZero() && !endAt.IsZero() && startAt.After(endAt) {
-		return nil, nil, errors.New("开始时间不能大于结束时间")
-	}
-
-	var startPtr *time.Time
-	var endPtr *time.Time
-
-	if !startAt.IsZero() {
-		startPtr = &startAt
-	}
-
-	if !endAt.IsZero() {
-		endPtr = &endAt
-	}
-
-	return startPtr, endPtr, nil
+	return
 }
 
 func isNumber(s string) bool {
