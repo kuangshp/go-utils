@@ -221,31 +221,38 @@ func DiffIds[T comparable](dbIds, reqIds []T) (
 	return
 }
 
-// DiffBy 比较数据库和请求中的对象，返回新增、更新、删除的数据。
-func DiffBy[T any, K comparable](
-	dbList,
-	reqList []T,
+// DiffByKey 比较数据库和请求中的对象，返回新增、更新、删除的数据。
+func DiffByKey[T any, K comparable](
+	dbList, reqList []T,
 	keyFn func(T) K,
-) (
-	toCreate []T,
-	toUpdate []T,
-	toDelete []T,
-) {
+) (toCreate, toUpdate, toDelete []T) {
+	var zero K
+
 	dbMap := make(map[K]T, len(dbList))
 	for _, item := range dbList {
-		dbMap[keyFn(item)] = item
+		key := keyFn(item)
+		if key == zero {
+			continue
+		}
+		dbMap[key] = item
 	}
 
 	reqMap := make(map[K]T, len(reqList))
 	for _, item := range reqList {
-		reqMap[keyFn(item)] = item
-	}
+		key := keyFn(item)
 
-	for key, reqItem := range reqMap {
+		// 前端没有 ID，或者 ID = 0 / ""，直接新增
+		if key == zero {
+			toCreate = append(toCreate, item)
+			continue
+		}
+
+		reqMap[key] = item
+
 		if _, ok := dbMap[key]; ok {
-			toUpdate = append(toUpdate, reqItem)
+			toUpdate = append(toUpdate, item)
 		} else {
-			toCreate = append(toCreate, reqItem)
+			toCreate = append(toCreate, item)
 		}
 	}
 
