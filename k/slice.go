@@ -187,8 +187,13 @@ func Distinct[T comparable](slice []T) []T {
 // 返回：
 //
 //	toInsert: reqIds 有、dbIds 没有
+//	toUpdate: reqIds 和 dbIds 都有
 //	toDelete: dbIds 有、reqIds 没有
-func DiffIds[T comparable](dbIds, reqIds []T) (toInsert, toDelete []T) {
+func DiffIds[T comparable](dbIds, reqIds []T) (
+	toCreate []T,
+	toUpdate []T,
+	toDelete []T,
+) {
 	dbSet := make(map[T]struct{}, len(dbIds))
 	for _, id := range dbIds {
 		dbSet[id] = struct{}{}
@@ -200,14 +205,53 @@ func DiffIds[T comparable](dbIds, reqIds []T) (toInsert, toDelete []T) {
 	}
 
 	for id := range reqSet {
-		if _, ok := dbSet[id]; !ok {
-			toInsert = append(toInsert, id)
+		if _, ok := dbSet[id]; ok {
+			toUpdate = append(toUpdate, id)
+		} else {
+			toCreate = append(toCreate, id)
 		}
 	}
 
 	for id := range dbSet {
 		if _, ok := reqSet[id]; !ok {
 			toDelete = append(toDelete, id)
+		}
+	}
+
+	return
+}
+
+// DiffBy 比较数据库和请求中的对象，返回新增、更新、删除的数据。
+func DiffBy[T any, K comparable](
+	dbList,
+	reqList []T,
+	keyFn func(T) K,
+) (
+	toCreate []T,
+	toUpdate []T,
+	toDelete []T,
+) {
+	dbMap := make(map[K]T, len(dbList))
+	for _, item := range dbList {
+		dbMap[keyFn(item)] = item
+	}
+
+	reqMap := make(map[K]T, len(reqList))
+	for _, item := range reqList {
+		reqMap[keyFn(item)] = item
+	}
+
+	for key, reqItem := range reqMap {
+		if _, ok := dbMap[key]; ok {
+			toUpdate = append(toUpdate, reqItem)
+		} else {
+			toCreate = append(toCreate, reqItem)
+		}
+	}
+
+	for key, dbItem := range dbMap {
+		if _, ok := reqMap[key]; !ok {
+			toDelete = append(toDelete, dbItem)
 		}
 	}
 
