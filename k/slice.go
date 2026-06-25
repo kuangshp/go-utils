@@ -179,6 +179,41 @@ func Distinct[T comparable](slice []T) []T {
 	return result
 }
 
+// DiffIds 比较数据库和请求中的 ID，返回需要新增和删除的 ID。
+//
+// dbIds: 数据库已有的 ID
+// reqIds: 前端提交的 ID
+//
+// 返回：
+//
+//	toInsert: reqIds 有、dbIds 没有
+//	toDelete: dbIds 有、reqIds 没有
+func DiffIds[T comparable](dbIds, reqIds []T) (toInsert, toDelete []T) {
+	dbSet := make(map[T]struct{}, len(dbIds))
+	for _, id := range dbIds {
+		dbSet[id] = struct{}{}
+	}
+
+	reqSet := make(map[T]struct{}, len(reqIds))
+	for _, id := range reqIds {
+		reqSet[id] = struct{}{}
+	}
+
+	for id := range reqSet {
+		if _, ok := dbSet[id]; !ok {
+			toInsert = append(toInsert, id)
+		}
+	}
+
+	for id := range dbSet {
+		if _, ok := reqSet[id]; !ok {
+			toDelete = append(toDelete, id)
+		}
+	}
+
+	return
+}
+
 // ToMap 将slice其中抽取几个字段转换为map
 func ToMap[T any, K comparable, V any](collection []T, transform func(item T) (K, V)) map[K]V {
 	result := make(map[K]V, len(collection))

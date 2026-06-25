@@ -1,6 +1,7 @@
 package k
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -228,4 +229,42 @@ func TestResponseCache(t *testing.T) {
 	if string(entry.respBody) != "cached" {
 		t.Error("cache content mismatch")
 	}
+}
+
+// TestHttpGet 测试get请求
+func TestHttpGet(t *testing.T) {
+	const tianyanchaSearchURL = "https://xx/open/search/2.0"
+	token := "e0569a66-0"
+	resp, err := HttpGet(tianyanchaSearchURL, R().
+		Context(context.Background()).
+		Headers(map[string]string{
+			"Authorization": token,
+		}).
+		QueryParams(map[string]string{
+			"word":     "",
+			"pageNum":  "1",
+			"pageSize": "10",
+		}).
+		ExpectStatus(http.StatusOK),
+	)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	//body, err := io.ReadAll(resp.Body)
+	//if err != nil {
+	//	return
+	//}
+	//var result vo.CompanySearchRsp
+	//if err = json.Unmarshal(body, &result); err != nil {
+	//	c.Logger.Error(err)
+	//	c.Error(500, err, "解析企业信息响应失败")
+	//	return
+	//}
+	//if result.ErrorCode != 0 {
+	//	err = errors.New(result.Reason)
+	//	c.Error(500, err, err.Error())
+	//	return
+	//}
 }
