@@ -205,12 +205,16 @@ func TestDistinct(t *testing.T) {
 
 // TestDiffIds 测试比较数据库 ID 和请求 ID 后返回新增、删除集合。
 func TestDiffIds(t *testing.T) {
-	toInsert, toDelete := DiffIds([]int{1, 2, 3}, []int{2, 3, 4})
+	toInsert, toUpdate, toDelete := DiffIds([]int{1, 2, 3}, []int{2, 3, 4})
 	sort.Ints(toInsert)
+	sort.Ints(toUpdate)
 	sort.Ints(toDelete)
 
 	if !reflect.DeepEqual(toInsert, []int{4}) {
 		t.Fatalf("DiffIds() toInsert = %#v, want %#v", toInsert, []int{4})
+	}
+	if !reflect.DeepEqual(toUpdate, []int{2, 3}) {
+		t.Fatalf("DiffIds() toUpdate = %#v, want %#v", toUpdate, []int{2, 3})
 	}
 	if !reflect.DeepEqual(toDelete, []int{1}) {
 		t.Fatalf("DiffIds() toDelete = %#v, want %#v", toDelete, []int{1})

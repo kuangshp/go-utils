@@ -1,10 +1,12 @@
 package k
 
 import (
+	"strconv"
+	"strings"
+
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"strings"
 )
 
 // Substring 字符串截取
@@ -131,4 +133,59 @@ func Case2Camel(name string) string {
 func LowerCamelCase(name string) string {
 	name = Case2Camel(name)
 	return strings.ToLower(name[:1]) + name[1:]
+}
+
+// SplitToSlice 分割字符串，自动转为 []string 或整数切片。
+// T 只能传 string 或 Go 内置整数类型。
+func SplitToSlice[T string | int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64](raw string, sep string) []T {
+	var result []T
+	if raw == "" {
+		return result
+	}
+
+	parts := strings.Split(raw, sep)
+	for _, s := range parts {
+		s = strings.TrimSpace(s)
+		if s == "" {
+			continue
+		}
+
+		var val T
+		switch any(val).(type) {
+		case string:
+			val = any(s).(T)
+		case int:
+			n, _ := strconv.Atoi(s)
+			val = any(n).(T)
+		case int8:
+			n, _ := strconv.ParseInt(s, 10, 8)
+			val = any(int8(n)).(T)
+		case int16:
+			n, _ := strconv.ParseInt(s, 10, 16)
+			val = any(int16(n)).(T)
+		case int32:
+			n, _ := strconv.ParseInt(s, 10, 32)
+			val = any(int32(n)).(T)
+		case int64:
+			n, _ := strconv.ParseInt(s, 10, 64)
+			val = any(n).(T)
+		case uint:
+			n, _ := strconv.ParseUint(s, 10, 0)
+			val = any(uint(n)).(T)
+		case uint8:
+			n, _ := strconv.ParseUint(s, 10, 8)
+			val = any(uint8(n)).(T)
+		case uint16:
+			n, _ := strconv.ParseUint(s, 10, 16)
+			val = any(uint16(n)).(T)
+		case uint32:
+			n, _ := strconv.ParseUint(s, 10, 32)
+			val = any(uint32(n)).(T)
+		case uint64:
+			n, _ := strconv.ParseUint(s, 10, 64)
+			val = any(n).(T)
+		}
+		result = append(result, val)
+	}
+	return result
 }
