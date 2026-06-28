@@ -179,6 +179,21 @@ func Distinct[T comparable](slice []T) []T {
 	return result
 }
 
+// DistinctBy 根据 keyFn 返回的 key 对 slice 去重，保留首次出现顺序
+func DistinctBy[T any, K comparable](slice []T, keyFn func(T) K) []T {
+	seen := make(map[K]struct{}, len(slice))
+	result := make([]T, 0, len(slice))
+
+	for _, v := range slice {
+		key := keyFn(v)
+		if _, ok := seen[key]; !ok {
+			seen[key] = struct{}{}
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
 // DiffIds 比较数据库和请求中的 ID，返回需要新增和删除的 ID。
 //
 // dbIds: 数据库已有的 ID
