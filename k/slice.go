@@ -1,7 +1,9 @@
 package k
 
 import (
+	"cmp"
 	"reflect"
+	"slices"
 	"sort"
 )
 
@@ -123,7 +125,7 @@ func GroupByWithMapper[T any, K comparable, V any](
 
 // Difference 取差集 找出 slice 中有但 comparedSlice 中没有的元素,slice=[1,2,3,4,5,6],comparedSlice = [1,2,3] 最后返回[4,5,6]
 func Difference[T comparable](slice, comparedSlice []T) []T {
-	result := []T{}
+	var result []T
 	for _, v := range slice {
 		if !IsContains(comparedSlice, v) {
 			result = append(result, v)
@@ -167,7 +169,7 @@ func Union[T comparable](slices ...[]T) []T {
 
 // Distinct 直接剩下唯一的 [1,1,2,3,4,4,5] => [1,2,3,4,5]
 func Distinct[T comparable](slice []T) []T {
-	result := []T{}
+	var result []T
 	exists := map[T]bool{}
 	for _, t := range slice {
 		if exists[t] {
@@ -352,4 +354,69 @@ func Flatten[T any](b *Builder[[]T]) []T {
 		res = append(res, item...)
 	}
 	return res
+}
+
+// CompareFunc 比较函数。
+//
+// 返回值：
+//   - < 0：a 排在 b 前面
+//   - = 0：a 与 b 相等（当前比较条件下）
+//   - > 0：a 排在 b 后面
+type CompareFunc[T any] func(a, b T) int
+
+// SortByKey 对切片进行稳定排序。
+//
+// 支持传入多个比较器，按照先后顺序依次比较。
+// 当前一个比较器返回 0（表示相等）时，才会继续使用下一个比较器。
+//
+// 例如：
+//
+//	Sort(
+//	    users,
+//	    AscBy(func(u User) int { return u.Age }),
+//	    DescBy(func(u User) int { return u.Score }),
+//	)
+//
+// 等价于 SQL：
+//
+//	ORDER BY age ASC, score DESC
+func SortByKey[T any](slice []T, compares ...CompareFunc[T]) {
+	if len(slice) < 2 || len(compares) == 0 {
+		return
+	}
+
+	// Filter nil comparators once.
+	valid := compares[:0]
+	for _, compareItem := range compares {
+		if compareItem != nil {
+			valid = append(valid, compareItem)
+		}
+	}
+
+	if len(valid) == 0 {
+		return
+	}
+
+	slices.SortStableFunc(slice, func(a, b T) int {
+		for _, compareItem := range valid {
+			if result := compareItem(a, b); result != 0 {
+				return result
+			}
+		}
+		return 0
+	})
+}
+
+// AscBy returns a comparator that sorts by key in ascending order.
+func AscBy[T any, K cmp.Ordered](key func(T) K) CompareFunc[T] {
+	return func(a, b T) int {
+		return cmp.Compare(key(a), key(b))
+	}
+}
+
+// DescBy returns a comparator that sorts by key in descending order.
+func DescBy[T any, K cmp.Ordered](key func(T) K) CompareFunc[T] {
+	return func(a, b T) int {
+		return cmp.Compare(key(b), key(a))
+	}
 }

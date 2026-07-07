@@ -20,6 +20,67 @@ func TestSortListMap(t *testing.T) {
 	fmt.Println(list1)
 }
 
+// TestSortBy 测试按多个字段组合排序，并在比较结果相等时保留原顺序。
+func TestSortBy(t *testing.T) {
+	type user struct {
+		ID    int
+		Name  string
+		Score int
+	}
+	users := []user{
+		{ID: 1, Name: "alice", Score: 90},
+		{ID: 2, Name: "bob", Score: 80},
+		{ID: 3, Name: "cindy", Score: 90},
+		{ID: 4, Name: "david", Score: 90},
+	}
+
+	SortBy(
+		users,
+		DescBy(func(item user) int {
+			return item.Score
+		}),
+		AscBy(func(item user) string {
+			return item.Name
+		}),
+	)
+	want := []user{
+		{ID: 1, Name: "alice", Score: 90},
+		{ID: 3, Name: "cindy", Score: 90},
+		{ID: 4, Name: "david", Score: 90},
+		{ID: 2, Name: "bob", Score: 80},
+	}
+
+	if !reflect.DeepEqual(users, want) {
+		t.Fatalf("SortBy() = %#v, want %#v", users, want)
+	}
+}
+
+// TestSortByStable 测试所有比较器相等时保持输入顺序。
+func TestSortByStable(t *testing.T) {
+	type user struct {
+		ID    int
+		Score int
+	}
+	users := []user{
+		{ID: 1, Score: 90},
+		{ID: 2, Score: 90},
+		{ID: 3, Score: 80},
+	}
+
+	SortBy(users, DescBy(func(item user) int {
+		return item.Score
+	}))
+	want := []user{
+		{ID: 1, Score: 90},
+		{ID: 2, Score: 90},
+		{ID: 3, Score: 80},
+	}
+
+	if !reflect.DeepEqual(users, want) {
+		t.Fatalf("SortBy() = %#v, want %#v", users, want)
+	}
+}
+
 // TestIsContains 测试判断切片是否包含指定元素。
 func TestIsContains(t *testing.T) {
 	fmt.Println(IsContains([]int64{1, 2, 3}, 2))
@@ -203,6 +264,34 @@ func TestDistinct(t *testing.T) {
 	}
 }
 
+// TestDistinctBy 测试按 key 函数对切片去重，并保留首次出现的元素顺序。
+func TestDistinctBy(t *testing.T) {
+	type user struct {
+		ID   int
+		Name string
+	}
+	users := []user{
+		{ID: 1, Name: "alice"},
+		{ID: 2, Name: "bob"},
+		{ID: 1, Name: "alice again"},
+		{ID: 3, Name: "cindy"},
+		{ID: 2, Name: "bob again"},
+	}
+
+	got := DistinctBy(users, func(item user) int {
+		return item.ID
+	})
+	want := []user{
+		{ID: 1, Name: "alice"},
+		{ID: 2, Name: "bob"},
+		{ID: 3, Name: "cindy"},
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("DistinctBy() = %#v, want %#v", got, want)
+	}
+}
+
 // TestDiffIds 测试比较数据库 ID 和请求 ID 后返回新增、删除集合。
 func TestDiffIds(t *testing.T) {
 	toInsert, toUpdate, toDelete := DiffIds([]int{1, 2, 3}, []int{2, 3, 4})
@@ -218,6 +307,53 @@ func TestDiffIds(t *testing.T) {
 	}
 	if !reflect.DeepEqual(toDelete, []int{1}) {
 		t.Fatalf("DiffIds() toDelete = %#v, want %#v", toDelete, []int{1})
+	}
+}
+
+// TestDiffByKey 测试按 key 比较数据库对象和请求对象后返回新增、更新、删除集合。
+func TestDiffByKey(t *testing.T) {
+	type user struct {
+		ID   int
+		Name string
+	}
+	dbUsers := []user{
+		{ID: 1, Name: "alice old"},
+		{ID: 2, Name: "bob old"},
+		{ID: 3, Name: "cindy old"},
+	}
+	reqUsers := []user{
+		{ID: 0, Name: "new without id"},
+		{ID: 2, Name: "bob new"},
+		{ID: 4, Name: "david new"},
+	}
+
+	toCreate, toUpdate, toDelete := DiffByKey(dbUsers, reqUsers, func(item user) int {
+		return item.ID
+	})
+	wantCreate := []user{
+		{ID: 0, Name: "new without id"},
+		{ID: 4, Name: "david new"},
+	}
+	wantUpdate := []user{
+		{ID: 2, Name: "bob new"},
+	}
+	wantDelete := []user{
+		{ID: 1, Name: "alice old"},
+		{ID: 3, Name: "cindy old"},
+	}
+
+	sort.Slice(toDelete, func(i, j int) bool {
+		return toDelete[i].ID < toDelete[j].ID
+	})
+
+	if !reflect.DeepEqual(toCreate, wantCreate) {
+		t.Fatalf("DiffByKey() toCreate = %#v, want %#v", toCreate, wantCreate)
+	}
+	if !reflect.DeepEqual(toUpdate, wantUpdate) {
+		t.Fatalf("DiffByKey() toUpdate = %#v, want %#v", toUpdate, wantUpdate)
+	}
+	if !reflect.DeepEqual(toDelete, wantDelete) {
+		t.Fatalf("DiffByKey() toDelete = %#v, want %#v", toDelete, wantDelete)
 	}
 }
 
