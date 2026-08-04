@@ -183,6 +183,28 @@ func IsValidJSONArray[T any](value string, validate func(T) bool) bool {
 	return true
 }
 
+// IsNonEmptyJSONObject 判断字符串是否为非空 JSON 对象。
+func IsNonEmptyJSONObject(value string) bool {
+	var data map[string]json.RawMessage
+	return json.Unmarshal([]byte(value), &data) == nil && len(data) > 0
+}
+
+// IsValidJSONObject 判断字符串是否为非空 JSON 对象，并使用 validate 校验解析后的对象。
+// validate 为 nil 时只校验 JSON 对象是否非空且能否解析为 T。
+func IsValidJSONObject[T any](value string, validate func(T) bool) bool {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(value), &fields); err != nil || len(fields) == 0 {
+		return false
+	}
+
+	var data T
+	if err := json.Unmarshal([]byte(value), &data); err != nil {
+		return false
+	}
+
+	return validate == nil || validate(data)
+}
+
 // IsNumberStr 判断是否为字符串数字
 func IsNumberStr(s string) bool {
 	return IsIntStr(s) || IsFloatStr(s)
