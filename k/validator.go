@@ -157,6 +157,32 @@ func IsJSON(str string) bool {
 	return json.Unmarshal([]byte(str), &js) == nil
 }
 
+// IsNonEmptyJSONArray 判断字符串是否为非空 JSON 数组。
+func IsNonEmptyJSONArray(value string) bool {
+	return IsValidJSONArray[json.RawMessage](value, nil)
+}
+
+// IsValidJSONArray 判断字符串是否为非空 JSON 数组，并使用 validate 校验数组中的每个元素。
+// validate 为 nil 时只校验 JSON 数组是否非空。
+func IsValidJSONArray[T any](value string, validate func(T) bool) bool {
+	var data []T
+	if err := json.Unmarshal([]byte(value), &data); err != nil || len(data) == 0 {
+		return false
+	}
+
+	if validate == nil {
+		return true
+	}
+
+	for _, item := range data {
+		if !validate(item) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // IsNumberStr 判断是否为字符串数字
 func IsNumberStr(s string) bool {
 	return IsIntStr(s) || IsFloatStr(s)
