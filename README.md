@@ -35,6 +35,92 @@
 
 位于 `k/validator.go`
 
+结构体参数校验和中文错误翻译位于独立的 `k/validation` 子包。该子包不依赖 Gin、go-zero 等 HTTP 框架，默认读取 `validate` 标签：
+
+```go
+type request struct {
+	StartTime string `json:"startTime" validate:"required,dateTime"`
+}
+
+if err := validation.Validate(&request{}); err != nil {
+	fmt.Println(err)
+}
+```
+
+需要复用调用方已有的 `*validator.Validate` 时，使用 `Configure`。它只注册通用规则、JSON 字段名和中文翻译，不修改已有引擎选择的校验标签，因此可兼容使用 `binding` 等标签的框架：
+
+```go
+translator, err := validation.Configure(existingValidator)
+if err != nil {
+	return err
+}
+message := translator.FirstMessage(validateErr)
+```
+
+默认提供 `date`、`dateTime`、`decimal`、`afterDate`、`mobile`、`checkMobile`、`checkEmail` 和 `myEmail`。项目专用规则通过 `validation.WithRules` 注册，公共包不会引入其业务依赖。
+
+### Gin 中使用
+
+go-utils 不依赖 Gin。Gin 项目在应用启动时，将校验规则注册到 Gin 自带的 validator：
+
+```go
+package main
+
+import (
+	"errors"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
+	"github.com/kuangshp/go-utils/k/validation"
+)
+
+type CreateUserReq struct {
+	Mobile    string `json:"mobile" binding:"required,checkMobile"`
+	StartTime string `json:"startTime" binding:"required,dateTime"`
+}
+
+func newRequestValidator() (*validation.Validator, error) {
+	engine, ok := binding.Validator.Engine().(*validator.Validate)
+	if !ok {
+		return nil, errors.New("unsupported Gin validator engine")
+	}
+	return validation.Configure(engine)
+}
+
+func createUserHandler(requestValidator *validation.Validator) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var req CreateUserReq
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": requestValidator.FirstMessage(err),
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "success",
+		})
+	}
+}
+
+func main() {
+	requestValidator, err := newRequestValidator()
+	if err != nil {
+		panic(err)
+	}
+
+	router := gin.Default()
+	router.POST("/users", createUserHandler(requestValidator))
+	if err := router.Run(":8080"); err != nil {
+		panic(err)
+	}
+}
+```
+
+Gin 的字段使用 `binding` 标签。`ShouldBindJSON` 已经完成参数绑定和校验，Handler 中不要再调用 `validation.Validate`，只需使用配置后返回的 `Validator.FirstMessage` 翻译错误。
+
 ### 字符串验证
 
 | 函数 | 说明 | 示例 |
@@ -753,4 +839,3 @@ func main() {
     fmt.Printf("获取到 %d 个用户\n", len(users))
 }
 ```
-
