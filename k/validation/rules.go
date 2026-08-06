@@ -7,12 +7,10 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/kuangshp/go-utils/k"
 )
 
-var (
-	decimalMatcher       = regexp.MustCompile(`^\d*(\.\d{1,2})?$`)
-	chineseMobileMatcher = regexp.MustCompile(`^1(?:3\d|4[4-9]|5[0-35-9]|6[67]|7[013-8]|8\d|9\d)\d{8}$`)
-)
+var decimalMatcher = regexp.MustCompile(`^\d*(\.\d{1,2})?$`)
 
 func defaultRules() []Rule {
 	return []Rule{
@@ -65,7 +63,7 @@ func validateAfterDate(fieldLevel validator.FieldLevel) bool {
 }
 
 func validateMobile(fieldLevel validator.FieldLevel) bool {
-	return chineseMobileMatcher.MatchString(fieldLevel.Field().String())
+	return k.IsChineseMobile(fieldLevel.Field().String())
 }
 
 func validateEmail(fieldLevel validator.FieldLevel) bool {
