@@ -20,14 +20,14 @@ go test ./k -bench='Benchmark(Map|Filter|ParseDateRange|DateTimeStrToTime|CheckD
 
 | 能力 | 扩展点 | 说明 |
 |---|---|---|
-| 结构体校验 | `k/validation`：`Configure` / `WithRules` / `Validate` | 框架无关；Gin 用 `binding` 标签时只调 `Configure` + `FirstMessage` |
+| 结构体校验 | 已迁移至 `github.com/kuangshp/gorm-plus/validation` | 本库不再提供 `k/validation`，旧项目需替换导入路径 |
 | 验证码存储 | `k/store.AdapterCache` + `NewCacheStore`；`captcha.SetStore` | 多实例请接 Redis 等外部 Store，勿依赖默认内存 |
 | HTTP 客户端 | `NewClient(...).Retry/CircuitBreaker/Logger/...` | Builder 链式注入 |
 | 重试 | `WithLogger` / `WithMaxRetries` 等 Option | 默认静默，需观测时注入 Logger |
 | 排序 | `SortBy` = `SortByKey` 兼容别名 | 新代码推荐 `SortByKey` + `AscBy`/`DescBy` |
 | 加密 | `AesEncryptGCM` / `AesDecryptGCM` | **推荐**；`AesEcrypt`/`AesDeCrypt` 为遗留 CBC（IV=key 前缀），禁止新协议 |
 
-子包边界：新能力优先放入 `k/validation`、`k/store`、`k/captcha` 等子包，避免继续向 `k` 根目录堆放大文件。
+子包边界：新能力优先放入 `k/store`、`k/captcha` 等子包，避免继续向 `k` 根目录堆放大文件。
 
 ### 切片复杂度提示
 
@@ -72,91 +72,17 @@ go test ./k -bench='Benchmark(Map|Filter|ParseDateRange|DateTimeStrToTime|CheckD
 
 位于 `k/validator.go`
 
-结构体参数校验和中文错误翻译位于独立的 `k/validation` 子包。该子包不依赖 Gin、go-zero 等 HTTP 框架，默认读取 `validate` 标签：
+结构体参数校验和中文错误翻译已统一迁移到 `github.com/kuangshp/gorm-plus/validation`，本库删除 `k/validation`，不再维护重复实现，也不反向依赖 gorm-plus。
+
+业务项目需使用包含新校验包的 gorm-plus 版本，并替换旧导入路径：
 
 ```go
-type request struct {
-	StartTime string `json:"startTime" validate:"required,dateTime"`
-}
-
-if err := validation.Validate(&request{}); err != nil {
-	fmt.Println(err)
-}
+import "github.com/kuangshp/gorm-plus/validation"
 ```
 
-需要复用调用方已有的 `*validator.Validate` 时，使用 `Configure`。它只注册通用规则、JSON 字段名和中文翻译，不修改已有引擎选择的校验标签，因此可兼容使用 `binding` 等标签的框架：
+原 `Validate`、`HasRules`、`Configure`、`WithRules` 等入口沿用。Gin 项目继续使用 `binding` 标签，启动时统一配置 Gin 的已有引擎，绑定完成后只翻译错误，避免重复校验。完整接入与自定义规则覆盖示例见 [gorm-plus 校验文档](https://github.com/kuangshp/gorm-plus/blob/main/docs/validation.md)。
 
-```go
-translator, err := validation.Configure(existingValidator)
-if err != nil {
-	return err
-}
-message := translator.FirstMessage(validateErr)
-```
-
-默认提供 `date`、`dateTime`、`decimal`、`afterDate`、`mobile`、`checkMobile`、`checkEmail` 和 `myEmail`。项目专用规则通过 `validation.WithRules` 注册，公共包不会引入其业务依赖。
-
-### Gin 中使用
-
-go-utils 不依赖 Gin。Gin 项目在应用启动时，将校验规则注册到 Gin 自带的 validator：
-
-```go
-package main
-
-import (
-	"errors"
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
-	"github.com/kuangshp/go-utils/k/validation"
-)
-
-type CreateUserReq struct {
-	Mobile    string `json:"mobile" binding:"required,checkMobile"`
-	StartTime string `json:"startTime" binding:"required,dateTime"`
-}
-
-func newRequestValidator() (*validation.Validator, error) {
-	engine, ok := binding.Validator.Engine().(*validator.Validate)
-	if !ok {
-		return nil, errors.New("unsupported Gin validator engine")
-	}
-	return validation.Configure(engine)
-}
-
-func createUserHandler(requestValidator *validation.Validator) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var req CreateUserReq
-		if err := ctx.ShouldBindJSON(&req); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": requestValidator.FirstMessage(err),
-			})
-			return
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{
-			"message": "success",
-		})
-	}
-}
-
-func main() {
-	requestValidator, err := newRequestValidator()
-	if err != nil {
-		panic(err)
-	}
-
-	router := gin.Default()
-	router.POST("/users", createUserHandler(requestValidator))
-	if err := router.Run(":8080"); err != nil {
-		panic(err)
-	}
-}
-```
-
-Gin 的字段使用 `binding` 标签。`ShouldBindJSON` 已经完成参数绑定和校验，Handler 中不要再调用 `validation.Validate`，只需使用配置后返回的 `Validator.FirstMessage` 翻译错误。
+这是旧包导入路径的不兼容变更：升级到删除旧包的版本前请完成迁移。未发布新校验包时，可先在业务项目临时将 gorm-plus `replace` 指向本地源码验证。`k/validator.go` 中的字符串、号码等工具函数保留；使用本库其他工具的项目仍可正常保留 go-utils 依赖。
 
 ### 字符串验证
 
