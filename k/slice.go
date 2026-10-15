@@ -123,11 +123,21 @@ func GroupByWithMapper[T any, K comparable, V any](
 	return result
 }
 
-// Difference 取差集 找出 slice 中有但 comparedSlice 中没有的元素,slice=[1,2,3,4,5,6],comparedSlice = [1,2,3] 最后返回[4,5,6]
+// Difference 取差集：找出 slice 中有但 comparedSlice 中没有的元素，保留 slice 中的首次出现顺序。
+// 复杂度 O(n+m)。slice=[1,2,3,4,5,6], comparedSlice=[1,2,3] → [4,5,6]
 func Difference[T comparable](slice, comparedSlice []T) []T {
-	var result []T
+	return DifferenceSet(slice, comparedSlice)
+}
+
+// DifferenceSet 与 Difference 相同，显式强调基于集合（map）实现，适合大切片。
+func DifferenceSet[T comparable](slice, comparedSlice []T) []T {
+	compared := make(map[T]struct{}, len(comparedSlice))
+	for _, v := range comparedSlice {
+		compared[v] = struct{}{}
+	}
+	result := make([]T, 0, len(slice))
 	for _, v := range slice {
-		if !IsContains(comparedSlice, v) {
+		if _, ok := compared[v]; !ok {
 			result = append(result, v)
 		}
 	}
@@ -364,6 +374,11 @@ func Flatten[T any](b *Builder[[]T]) []T {
 //   - > 0：a 排在 b 后面
 type CompareFunc[T any] func(a, b T) int
 
+// SortBy 是 SortByKey 的兼容别名，行为完全相同。
+func SortBy[T any](slice []T, compares ...CompareFunc[T]) {
+	SortByKey(slice, compares...)
+}
+
 // SortByKey 对切片进行稳定排序。
 //
 // 支持传入多个比较器，按照先后顺序依次比较。
@@ -371,7 +386,7 @@ type CompareFunc[T any] func(a, b T) int
 //
 // 例如：
 //
-//	Sort(
+//	SortByKey(
 //	    users,
 //	    AscBy(func(u User) int { return u.Age }),
 //	    DescBy(func(u User) int { return u.Score }),

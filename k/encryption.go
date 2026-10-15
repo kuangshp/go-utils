@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"errors"
+	"fmt"
+	"io"
 )
-
-// 高级加密标准
-// 16,24,32位字符串加密的话，分别对用AES-128,AES-192,AES-256加密方法
-// 定义一个key不能泄漏(这里采用16位的)
-//var pwdKey = []byte("DIS**#KKKDJJSKDI")
 
 // PKCS7Padding 定义填充模式
 func PKCS7Padding(cipherText []byte, blockSize int) []byte {
@@ -21,73 +19,88 @@ func PKCS7Padding(cipherText []byte, blockSize int) []byte {
 
 // PKC7UnPadding 定义反填充(删除填充的字符串)
 func PKC7UnPadding(origData []byte) ([]byte, error) {
-	//获取数据长度
 	length := len(origData)
 	if length == 0 {
 		return nil, errors.New("加密字符串错误！")
-	} else {
-		//获取填充字符串长度
-		unpadding := int(origData[length-1])
-		//截取切片，删除填充字节，并且返回明文
-		return origData[:(length - unpadding)], nil
 	}
+	unpadding := int(origData[length-1])
+	if unpadding <= 0 || unpadding > length {
+		return nil, errors.New("填充长度非法")
+	}
+	return origData[:(length - unpadding)], nil
 }
 
-// AesEcrypt 加密操作
+// AesEcrypt 使用 AES-CBC 加密。
+//
+// 安全红线（遗留 API）：IV 取自 key 前缀，可预测，禁止用于新协议或新密钥材料。
+// 新代码请使用 AesEncryptGCM。
 func AesEcrypt(origData []byte, key []byte) ([]byte, error) {
-	// 创建加密算法实例
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
-	// 获取块的大小
 	blockSize := block.BlockSize()
-	// 对数据进行填充，让数据长度满足需求
+	if len(key) < blockSize {
+		return nil, errors.New("密钥长度不足")
+	}
 	origData = PKCS7Padding(origData, blockSize)
-	// 采用AES加密方法中的CBC加密模式
 	blockMode := cipher.NewCBCEncrypter(block, key[:blockSize])
 	crypted := make([]byte, len(origData))
-	// 执行加密操作
 	blockMode.CryptBlocks(crypted, origData)
 	return crypted, nil
 }
 
-// AesDeCrypt 解密算法
+// AesDeCrypt AES-CBC 解密，对应 AesEcrypt（IV=key 前缀的遗留格式）。
 func AesDeCrypt(cypted []byte, key []byte) ([]byte, error) {
-	//创建加密算法实例
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
-	//获取块大小
 	blockSize := block.BlockSize()
-	//创建加密客户端实例
+	if len(key) < blockSize {
+		return nil, errors.New("密钥长度不足")
+	}
+	if len(cypted) == 0 || len(cypted)%blockSize != 0 {
+		return nil, errors.New("密文长度非法")
+	}
 	blockMode := cipher.NewCBCDecrypter(block, key[:blockSize])
 	origData := make([]byte, len(cypted))
-	//这个函数也可以用来解密
 	blockMode.CryptBlocks(origData, cypted)
-	//去除填充字符串
-	origData, err = PKC7UnPadding(origData)
+	return PKC7UnPadding(origData)
+}
+
+// AesEncryptGCM 使用 AES-GCM 加密，输出格式为 nonce||ciphertext（含认证标签）。
+// key 长度须为 16/24/32 字节。推荐用于新协议。
+func AesEncryptGCM(plain []byte, key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
-	return origData, err
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, fmt.Errorf("生成 nonce 失败: %w", err)
+	}
+	return gcm.Seal(nonce, nonce, plain, nil), nil
 }
 
-// EnPwdCode 加密后的byte转换为bs64
-//func EnPwdCode(pwd []byte) (string, error) {
-//	result, err := AesEcrypt(pwd, pwdKey)
-//	if err != nil {
-//		return "", nil
-//	}
-//	return base64.StdEncoding.EncodeToString(result), err
-//}
-//
-//func DePwdCode(pwd string) ([]byte, error) {
-//	pwdByte, err := base64.StdEncoding.DecodeString(pwd)
-//	if err != nil {
-//		return nil, err
-//	}
-//	// 执行解密
-//	return AesDeCrypt(pwdByte, pwdKey)
-//}
+// AesDecryptGCM 解密 AesEncryptGCM 产出的 nonce||ciphertext。
+func AesDecryptGCM(sealed []byte, key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	nonceSize := gcm.NonceSize()
+	if len(sealed) < nonceSize {
+		return nil, errors.New("密文过短")
+	}
+	nonce, ciphertext := sealed[:nonceSize], sealed[nonceSize:]
+	return gcm.Open(nil, nonce, ciphertext, nil)
+}

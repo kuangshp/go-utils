@@ -13,6 +13,7 @@ type RetryOptions struct {
 	RetryDelayBase     time.Duration
 	RetryDelayInterval float64
 	MaxTime            time.Duration
+	Logger             func(format string, args ...any)
 }
 
 type Option func(*RetryOptions)
@@ -31,6 +32,11 @@ func WithDelayMultiplier(multiplier float64) Option {
 
 func WithMaxTime(d time.Duration) Option {
 	return func(o *RetryOptions) { o.MaxTime = d }
+}
+
+// WithLogger 注入可选日志回调；默认不输出到 stdout。
+func WithLogger(logger func(format string, args ...any)) Option {
+	return func(o *RetryOptions) { o.Logger = logger }
 }
 
 func defaultOptions() *RetryOptions {
@@ -76,6 +82,7 @@ func IsNonRetryable(err error) bool {
 //	    WithMaxRetries(3),
 //	    WithRetryDelay(2*time.Second),
 //	    WithDelayMultiplier(2.0),
+//	    WithLogger(log.Printf),
 //	)
 //
 // operationFn 重试的方法,successFn 成功的方法
@@ -115,9 +122,12 @@ func retry(
 	successFn func(data any),
 ) error {
 	delay := opts.RetryDelayBase
+	var lastErr error
 
 	for attempt := 1; attempt <= opts.MaxRetries; attempt++ {
-		fmt.Printf("重试次数: %d, 时间: %s\n", attempt, time.Now().Format(time.DateTime))
+		if opts.Logger != nil {
+			opts.Logger("重试次数: %d, 时间: %s", attempt, time.Now().Format(time.DateTime))
+		}
 
 		select {
 		case <-ctx.Done():
@@ -125,11 +135,14 @@ func retry(
 		default:
 		}
 
-		if data, err := operationFn(); err == nil {
+		data, err := operationFn()
+		if err == nil {
 			successFn(data)
 			return nil
-		} else if IsNonRetryable(err) {
-			return err // 遇到不可重试错误，立即终止
+		}
+		lastErr = err
+		if IsNonRetryable(err) {
+			return err
 		}
 
 		if attempt < opts.MaxRetries {
@@ -142,22 +155,8 @@ func retry(
 		}
 	}
 
+	if lastErr != nil {
+		return fmt.Errorf("已达最大重试次数，执行失败: %w", lastErr)
+	}
 	return errors.New("已达最大重试次数，执行失败")
 }
-
-// Retry(
-//    func(args ...any) (any, error) {
-//        resp, err := callAPI()
-//        if err != nil {
-//            if isAuthError(err) {
-//                // 认证失败，重试也没用，直接终止
-//                return nil, NonRetryable(err)
-//            }
-//            // 网络抖动等，正常重试
-//            return nil, err
-//        }
-//        return resp, nil
-//    },
-//    func(data any) { fmt.Println("成功:", data) },
-//    WithMaxRetries(3),
-//)

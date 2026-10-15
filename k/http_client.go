@@ -103,7 +103,7 @@ type ProxyPool struct {
 	mu       sync.RWMutex
 	proxies  []*Proxy
 	strategy ProxyStrategy
-	index    int // 轮询使用的游标
+	rrIndex  atomic.Uint64 // 轮询游标（原子，避免 RLock 下写竞态）
 }
 
 // NewProxyPool 创建代理池
@@ -117,7 +117,6 @@ func NewProxyPool(urls []string, strategy ProxyStrategy) *ProxyPool {
 	for _, u := range urls {
 		p.proxies = append(p.proxies, &Proxy{URL: u, alive: true})
 	}
-	rand.New(rand.NewSource(time.Now().UnixNano()))
 	return p
 }
 
@@ -130,8 +129,7 @@ func (p *ProxyPool) Get() (*url.URL, error) {
 		return nil, nil
 	}
 
-	// 过滤出可用代理
-	alive := make([]*Proxy, 0)
+	alive := make([]*Proxy, 0, len(p.proxies))
 	for _, px := range p.proxies {
 		if px.alive {
 			alive = append(alive, px)
@@ -146,8 +144,8 @@ func (p *ProxyPool) Get() (*url.URL, error) {
 	case ProxyStrategyRandom:
 		target = alive[rand.Intn(len(alive))]
 	case ProxyStrategyRoundRobin:
-		target = alive[p.index%len(alive)]
-		p.index++
+		idx := p.rrIndex.Add(1) - 1
+		target = alive[idx%uint64(len(alive))]
 	default:
 		target = alive[0]
 	}

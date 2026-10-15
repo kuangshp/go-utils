@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+var (
+	checkDateOnlyRegex = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
+	checkDateTimeRegex = regexp.MustCompile(`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$`)
+)
+
 // DateToTimesInt10 时间转时间戳
 func DateToTimesInt10(date time.Time) int64 {
 	return date.Unix()
@@ -18,13 +23,9 @@ func DateToTimesInt13(date time.Time) int64 {
 	return date.UnixNano() / 1e6
 }
 
-// CheckDateTime 判断时间格式
+// CheckDateTime 判断时间格式（YYYY-MM-DD 或 YYYY-MM-DD HH:MM:SS）
 func CheckDateTime(timeStr string) bool {
-	// 匹配 YYYY-MM-DD
-	dateRegex := regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
-	// 匹配 YYYY-MM-DD HH:MM:SS
-	dateTimeRegex := regexp.MustCompile(`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$`)
-	return dateRegex.MatchString(timeStr) || dateTimeRegex.MatchString(timeStr)
+	return checkDateOnlyRegex.MatchString(timeStr) || checkDateTimeRegex.MatchString(timeStr)
 }
 
 // DateStrToTime 简单的时间判断

@@ -2,8 +2,35 @@ package k
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
+
+func TestMakePasswordAndCheck(t *testing.T) {
+	hash, err := MakePassword("Secret#123")
+	if err != nil {
+		t.Fatalf("MakePassword: %v", err)
+	}
+	if hash == "" || hash == "Secret#123" {
+		t.Fatalf("hash 异常: %q", hash)
+	}
+	if !CheckPassword(hash, "Secret#123") {
+		t.Fatal("正确密码应通过")
+	}
+	if CheckPassword(hash, "wrong") {
+		t.Fatal("错误密码应失败")
+	}
+}
+
+func TestMaskMobile(t *testing.T) {
+	got := MaskMobile("13800138000")
+	if !strings.Contains(got, "****") || len(got) != len("13800138000") {
+		t.Fatalf("MaskMobile = %q", got)
+	}
+	if MaskMobile("") != "" {
+		t.Fatal("空手机号应返回空串")
+	}
+}
 
 func TestSplitToSliceString(t *testing.T) {
 	got := SplitToSlice[string](" a, b ,, c ", ",")

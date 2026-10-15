@@ -268,3 +268,31 @@ func TestHttpGet(t *testing.T) {
 	//	return
 	//}
 }
+
+func TestProxyPool_ConcurrentRoundRobin(t *testing.T) {
+	pool := NewProxyPool([]string{
+		"http://127.0.0.1:8001",
+		"http://127.0.0.1:8002",
+		"http://127.0.0.1:8003",
+	}, ProxyStrategyRoundRobin)
+
+	const goroutines = 64
+	const perG = 200
+	errCh := make(chan error, goroutines)
+	for g := 0; g < goroutines; g++ {
+		go func() {
+			for i := 0; i < perG; i++ {
+				if _, err := pool.Get(); err != nil {
+					errCh <- err
+					return
+				}
+			}
+			errCh <- nil
+		}()
+	}
+	for g := 0; g < goroutines; g++ {
+		if err := <-errCh; err != nil {
+			t.Fatal(err)
+		}
+	}
+}

@@ -231,6 +231,9 @@ func TestDifference(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("Difference() = %#v, want %#v", got, want)
 	}
+	if gotSet := DifferenceSet([]int{1, 2, 3, 4, 5, 6}, []int{1, 2, 3}); !reflect.DeepEqual(gotSet, want) {
+		t.Fatalf("DifferenceSet() = %#v, want %#v", gotSet, want)
+	}
 }
 
 // TestIntersect 测试返回两个切片的交集元素。

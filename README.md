@@ -5,6 +5,43 @@
     go get -u github.com/kuangshp/go-utils
     ```
 
+### 开发与质量门
+
+```bash
+go test ./...
+go vet ./...
+go test ./k -race -run 'ProxyPool|Retry' -count=1
+go test ./k -bench='Benchmark(Map|Filter|ParseDateRange|DateTimeStrToTime|CheckDateTime|ProxyPool)' -benchmem -count=5
+```
+
+请勿使用 `-vet=off` 作为默认门禁。库内禁止 `log.Fatalf` / `os.Exit`。
+
+### 兼容与扩展
+
+| 能力 | 扩展点 | 说明 |
+|---|---|---|
+| 结构体校验 | `k/validation`：`Configure` / `WithRules` / `Validate` | 框架无关；Gin 用 `binding` 标签时只调 `Configure` + `FirstMessage` |
+| 验证码存储 | `k/store.AdapterCache` + `NewCacheStore`；`captcha.SetStore` | 多实例请接 Redis 等外部 Store，勿依赖默认内存 |
+| HTTP 客户端 | `NewClient(...).Retry/CircuitBreaker/Logger/...` | Builder 链式注入 |
+| 重试 | `WithLogger` / `WithMaxRetries` 等 Option | 默认静默，需观测时注入 Logger |
+| 排序 | `SortBy` = `SortByKey` 兼容别名 | 新代码推荐 `SortByKey` + `AscBy`/`DescBy` |
+| 加密 | `AesEncryptGCM` / `AesDecryptGCM` | **推荐**；`AesEcrypt`/`AesDeCrypt` 为遗留 CBC（IV=key 前缀），禁止新协议 |
+
+子包边界：新能力优先放入 `k/validation`、`k/store`、`k/captcha` 等子包，避免继续向 `k` 根目录堆放大文件。
+
+### 切片复杂度提示
+
+| API | 复杂度 | 建议 |
+|---|---|---|
+| `Map` / `Filter` / `Distinct` / `Difference` / `DifferenceSet` | 近 O(n) / O(n+m) | 列表映射与差集首选 |
+| `IsContains` | O(n) | 高频查找请先建 `map` |
+| `DistinctByField` | 反射 | 热路径改用 `DistinctBy` |
+
+### AES 安全红线
+
+- `AesEcrypt` / `AesDeCrypt`：CBC 且 IV 取自密钥前缀，**仅兼容旧数据**。
+- 新加密请使用 `AesEncryptGCM` / `AesDecryptGCM`（输出 `nonce\|\|ciphertext`）。
+
 ---
 
 ## 目录

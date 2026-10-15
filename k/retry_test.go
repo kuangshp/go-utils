@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
@@ -441,15 +442,35 @@ func TestRetry_SuccessFnReceivesCorrectType(t *testing.T) {
 }
 
 func TestRetry_ErrorMessageOnExhaustion(t *testing.T) {
+	inner := errors.New("x")
 	err := Retry(
-		func(args ...any) (any, error) { return nil, errors.New("x") },
+		func(args ...any) (any, error) { return nil, inner },
 		func(data any) {},
 		WithMaxRetries(2),
 		WithRetryDelay(5*time.Millisecond),
 	)
-	want := "已达最大重试次数，执行失败"
-	if err == nil || err.Error() != want {
-		t.Errorf("got %v, want %q", err, want)
+	if err == nil {
+		t.Fatal("期望错误")
+	}
+	if !errors.Is(err, inner) {
+		t.Errorf("应 wrap 最后一次错误, got %v", err)
+	}
+	if got := err.Error(); !strings.Contains(got, "已达最大重试次数") {
+		t.Errorf("错误文案应包含最大重试提示, got %q", got)
+	}
+}
+
+func TestRetry_WithLogger(t *testing.T) {
+	logs := 0
+	_ = Retry(
+		func(args ...any) (any, error) { return nil, errors.New("x") },
+		func(data any) {},
+		WithMaxRetries(2),
+		WithRetryDelay(5*time.Millisecond),
+		WithLogger(func(format string, args ...any) { logs++ }),
+	)
+	if logs != 2 {
+		t.Fatalf("Logger 调用次数 = %d, want 2", logs)
 	}
 }
 

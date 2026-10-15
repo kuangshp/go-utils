@@ -1,9 +1,12 @@
 package k
 
 import (
-	"github.com/xuri/excelize/v2"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/xuri/excelize/v2"
 )
 
 func TestExportToExcel(t *testing.T) {
@@ -59,5 +62,12 @@ func TestExportToExcel(t *testing.T) {
 	if err != nil {
 		t.Fatal("导出excel失败", err)
 	}
-	f.SaveAs("销售表.xlsx")
+	path := filepath.Join(t.TempDir(), "sales.xlsx")
+	if err := f.SaveAs(path); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+	info, err := os.Stat(path)
+	if err != nil || info.Size() == 0 {
+		t.Fatalf("导出文件异常: %v size=%v", err, info)
+	}
 }
